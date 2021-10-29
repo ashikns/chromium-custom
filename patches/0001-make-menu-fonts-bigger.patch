@@ -1,0 +1,33 @@
+From 60fb116ce3eeac45108a5d3e8c1d996b3bbf7fc2 Mon Sep 17 00:00:00 2001
+From: Ashik Salim <ashikns@gmail.com>
+Date: Wed, 27 Oct 2021 20:38:00 +0530
+Subject: [PATCH] make menu fonts bigger
+
+---
+ ui/gfx/system_fonts_win.cc | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/ui/gfx/system_fonts_win.cc b/ui/gfx/system_fonts_win.cc
+index ffb7a543ba02a..9c99b4bbc5f33 100644
+--- a/ui/gfx/system_fonts_win.cc
++++ b/ui/gfx/system_fonts_win.cc
+@@ -184,12 +184,15 @@ class SystemFonts {
+     double system_scale = GetSystemScale();
+     font_adjustment.font_scale /= system_scale;
+ 
++    FontAdjustment menu_font_adjustment = font_adjustment;
++    menu_font_adjustment.font_scale *= 1.2;
++
+     // Grab each of the fonts from the NONCLIENTMETRICS block, adjust it
+     // appropriately, and store it in the font table.
+     AddFont(SystemFont::kCaption, font_adjustment, &metrics.lfCaptionFont);
+     AddFont(SystemFont::kSmallCaption, font_adjustment,
+             &metrics.lfSmCaptionFont);
+-    AddFont(SystemFont::kMenu, font_adjustment, &metrics.lfMenuFont);
++    AddFont(SystemFont::kMenu, menu_font_adjustment, &metrics.lfMenuFont);
+     AddFont(SystemFont::kMessage, font_adjustment, &metrics.lfMessageFont);
+     AddFont(SystemFont::kStatus, font_adjustment, &metrics.lfStatusFont);
+ 
+-- 
+2.33.1.windows.1
+

@@ -1,0 +1,67 @@
+From 9ac82d91fd2254ad20881cd65ca1d704face6bf3 Mon Sep 17 00:00:00 2001
+From: Ashik Salim <ashikns@gmail.com>
+Date: Thu, 28 Oct 2021 19:10:45 +0530
+Subject: [PATCH] experimental save layer rec
+
+---
+ cc/paint/paint_flags.cc     | 2 ++
+ cc/paint/paint_flags.h      | 4 ++++
+ cc/paint/paint_op_buffer.cc | 7 ++++++-
+ 3 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/cc/paint/paint_flags.cc b/cc/paint/paint_flags.cc
+index 8a83963b968f5..1fe117c022fc9 100644
+--- a/cc/paint/paint_flags.cc
++++ b/cc/paint/paint_flags.cc
+@@ -195,6 +195,8 @@ bool PaintFlags::operator==(const PaintFlags& other) const {
+     return false;
+   if (getFilterQuality() != other.getFilterQuality())
+     return false;
++  if (dependsOnPreviousLayer() != other.dependsOnPreviousLayer())
++    return false;
+ 
+   if (!PaintOp::AreSkFlattenablesEqual(getPathEffect().get(),
+                                        other.getPathEffect().get())) {
+diff --git a/cc/paint/paint_flags.h b/cc/paint/paint_flags.h
+index 9106bd55ef118..c86feda903b97 100644
+--- a/cc/paint/paint_flags.h
++++ b/cc/paint/paint_flags.h
+@@ -59,6 +59,9 @@ class CC_PAINT_EXPORT PaintFlags {
+   ALWAYS_INLINE bool isDither() const { return bitfields_.dither_; }
+   ALWAYS_INLINE void setDither(bool dither) { bitfields_.dither_ = dither; }
+ 
++  ALWAYS_INLINE bool dependsOnPreviousLayer() const { return bitfields_.depends_on_previous_layer_; }
++  ALWAYS_INLINE void setDependsOnPreviousLayer(bool depends) { bitfields_.depends_on_previous_layer_ = depends; }
++
+   enum class FilterQuality {
+     kNone,
+     kLow,
+@@ -215,6 +218,7 @@ class CC_PAINT_EXPORT PaintFlags {
+     // Specifies whether the compositor should use a dark mode filter when
+     // rasterizing image on the draw op with this PaintFlags.
+     uint32_t use_dark_mode_for_image_ : 1;
++    uint32_t depends_on_previous_layer_ : 1;
+   };
+ 
+   union {
+diff --git a/cc/paint/paint_op_buffer.cc b/cc/paint/paint_op_buffer.cc
+index c382ee15e7d37..20e1a0d7cb417 100644
+--- a/cc/paint/paint_op_buffer.cc
++++ b/cc/paint/paint_op_buffer.cc
+@@ -1763,7 +1763,12 @@ void SaveLayerOp::RasterWithFlags(const SaveLayerOp* op,
+   // See PaintOp::kUnsetRect
+   SkPaint paint = flags->ToSkPaint();
+   bool unset = op->bounds.left() == SK_ScalarInfinity;
+-  canvas->saveLayer(unset ? nullptr : &op->bounds, &paint);
++  if (flags->dependsOnPreviousLayer()) {
++    SkCanvas::SaveLayerRec rec(unset ? nullptr : &op->bounds, &paint, SkCanvas::kInitWithPrevious_SaveLayerFlag);
++    canvas->saveLayer(rec);
++  } else {
++    canvas->saveLayer(unset ? nullptr : &op->bounds, &paint);
++  }
+ }
+ 
+ void SaveLayerAlphaOp::Raster(const SaveLayerAlphaOp* op,
+-- 
+2.33.1.windows.1
+

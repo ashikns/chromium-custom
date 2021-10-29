@@ -1,0 +1,2 @@
+import_instr_limit=30
+lto_opt_level=2
